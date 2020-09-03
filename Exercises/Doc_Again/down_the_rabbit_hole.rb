@@ -1,0 +1,1 @@
+# yaml.load is located https://ruby-doc.org/stdlib-2.5.1/libdoc/yaml/rdoc/YAML.html
