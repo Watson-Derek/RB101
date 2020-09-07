@@ -1,0 +1,6 @@
+greet: "Welcome to the loan calculator!"
+amount: "Please enter your full loan amount:"
+apr: "Please enter your Annual Percentage Rate (APR):"
+duration: "Please enter you loan duration in total years:"
+entry_error: "Not a valid entry."
+result: "Your monthly payment is: $"
