@@ -15,4 +15,4 @@ end
 
 mess_with_demographics(munsters)
 p munsters
-#data did not change, as the return value did not pass to the hash
+#data did change, as the method reassigned the values to the keys
