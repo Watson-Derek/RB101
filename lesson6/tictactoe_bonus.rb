@@ -7,6 +7,8 @@ WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
 INITIAL_MARKER = ' '
 PLAYER_MARKER = 'X'
 COMPUTER_MARKER = 'O'
+PLAYER_1 = 'Player'
+PLAYER_2 = 'Computer'
 FIRST_TURN = 'choose'
 
 def prompt(msg)
@@ -44,7 +46,7 @@ def empty_squares(brd)
 end
 
 def joinor(array, delimiter = ', ', word = 'or')
-  choices = "Choose a square: #{array[0]}"
+  choices = array[0].to_s
   index = 1
   return choices if array.size == 1
   return choices << " #{word} #{array[1]}" if array.size == 2
@@ -64,40 +66,55 @@ end
 def player_places_piece!(brd)
   square = ''
   loop do
-    prompt joinor(empty_squares(brd))
-    square = gets.chomp.to_i
-    break if empty_squares(brd).include?(square)
+    prompt "Choose a squre: #{joinor(empty_squares(brd))}"
+    square = gets.chomp
+    break if square == square.to_i.to_s &&
+             empty_squares(brd).include?(square.to_i)
     prompt "Sorry, that's not a valid choice."
   end
-  brd[square] = PLAYER_MARKER
+  brd[square.to_i] = PLAYER_MARKER
 end
 
 def computer_ai(brd)
   WINNING_LINES.each do |line|
     if brd.values_at(*line).count(COMPUTER_MARKER) == 2 &&
        brd.values_at(*line).count(PLAYER_MARKER) == 0
-      return line[brd.values_at(*line).index(' ')]
+      return line[brd.values_at(*line).index(INITIAL_MARKER)]
     end
   end
   WINNING_LINES.each do |line|
     if brd.values_at(*line).count(PLAYER_MARKER) == 2 &&
        brd.values_at(*line).count(COMPUTER_MARKER) == 0
-      return line[brd.values_at(*line).index(' ')]
+      return line[brd.values_at(*line).index(INITIAL_MARKER)]
     end
   end
   nil
 end
 
 def computer_places_piece!(brd)
-  if computer_ai(brd)
-    brd[computer_ai(brd)] = COMPUTER_MARKER
-  elsif empty_squares(brd).include?(5)
-    brd[5] = COMPUTER_MARKER
-  else
-    square = empty_squares(brd).sample
-    brd[square] = COMPUTER_MARKER
+  computer_choice = computer_ai(brd)
+
+  if !computer_choice
+    computer_choice = if !computer_choice && empty_squares(brd).include?(5)
+                        5
+                      else
+                        empty_squares(brd).sample
+                      end
   end
+
+  brd[computer_choice] = COMPUTER_MARKER
 end
+
+# def computer_places_piece!(brd)
+#   if computer_ai(brd)
+#     brd[computer_ai(brd)] = COMPUTER_MARKER
+#   elsif empty_squares(brd).include?(5)
+#     brd[5] = COMPUTER_MARKER
+#   else
+#     square = empty_squares(brd).sample
+#     brd[square] = COMPUTER_MARKER
+#   end
+# end
 
 def board_full?(brd)
   empty_squares(brd).empty?
@@ -110,22 +127,22 @@ end
 def detect_winner(brd)
   WINNING_LINES.each do |line|
     if brd.values_at(*line).count(PLAYER_MARKER) == 3
-      return 'Player'
+      return PLAYER_1
     elsif brd.values_at(*line).count(COMPUTER_MARKER) == 3
-      return 'Computer'
+      return PLAYER_2
     end
   end
   nil
 end
 
 def place_piece!(brd, player)
-  player_places_piece!(brd) if player == 'player'
-  computer_places_piece!(brd) if player == 'computer'
+  player_places_piece!(brd) if player == PLAYER_1
+  computer_places_piece!(brd) if player == PLAYER_2
 end
 
 def alternate_player(player)
-  return 'player' if player == 'computer'
-  'computer'
+  return PLAYER_1 if player == PLAYER_2
+  PLAYER_2
 end
 
 def determine_first_player(string)
@@ -134,8 +151,8 @@ def determine_first_player(string)
     loop do
       prompt "Choose first player: p/player or c/computer"
       choice = gets.chomp
-      return player << 'player' if choice.downcase.start_with?('p')
-      return player << 'computer' if choice.downcase.start_with?('c')
+      return player << PLAYER_1 if choice.downcase.start_with?('p')
+      return player << PLAYER_2 if choice.downcase.start_with?('c')
       prompt "Not a valid choice."
     end
   else
@@ -154,8 +171,8 @@ loop do
 
     loop do
       display_board(board)
-      prompt "Current score - Player: #{player_score}, " \
-            "Computer: #{computer_score}"
+      prompt "Current score - #{PLAYER_1}: #{player_score}, " \
+            "#{PLAYER_2}: #{computer_score}"
 
       place_piece!(board, current_player)
       current_player = alternate_player(current_player)
@@ -166,8 +183,8 @@ loop do
 
     if someone_won?(board)
       prompt "#{detect_winner(board)} won!"
-      player_score += 1 if detect_winner(board) == 'Player'
-      computer_score += 1 if detect_winner(board) == 'Computer'
+      player_score += 1 if detect_winner(board) == PLAYER_1
+      computer_score += 1 if detect_winner(board) == PLAYER_2
     else
       prompt "It's a tie!"
     end
