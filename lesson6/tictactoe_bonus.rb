@@ -8,6 +8,7 @@ COMPUTER_MARKER = 'O'
 PLAYER_1 = 'Player'
 PLAYER_2 = 'Computer'
 FIRST_TURN = 'choose'
+NUM_WINS = 5
 
 def prompt(msg)
   puts "=> #{msg}"
@@ -128,8 +129,7 @@ def place_piece!(brd, player)
 end
 
 def alternate_player(player)
-  return PLAYER_1 if player == PLAYER_2
-  PLAYER_2
+  player == PLAYER_1 ? PLAYER_2 : PLAYER_1
 end
 
 def determine_first_player(string)
@@ -148,7 +148,7 @@ def determine_first_player(string)
 end
 
 loop do
-  prompt "First to 5 wins is the champion!"
+  prompt "First to #{NUM_WINS} wins is the champion!"
   player_score = 0
   computer_score = 0
   first_player = determine_first_player(FIRST_TURN)
@@ -176,11 +176,13 @@ loop do
       prompt "It's a tie!"
     end
 
-    break if player_score == 5 || computer_score == 5
+    break if player_score == NUM_WINS || computer_score == NUM_WINS
     prompt "Press Enter to start next game."
     gets
   end
 
+  prompt "Final score: #{PLAYER_1} - #{player_score}, " \
+         "#{PLAYER_2} - #{computer_score}"
   prompt "Play again? (y or n)"
   answer = gets.chomp
   break unless answer.downcase.start_with?('y')
