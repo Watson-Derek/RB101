@@ -105,17 +105,6 @@ def computer_places_piece!(brd)
   brd[computer_choice] = COMPUTER_MARKER
 end
 
-# def computer_places_piece!(brd)
-#   if computer_ai(brd)
-#     brd[computer_ai(brd)] = COMPUTER_MARKER
-#   elsif empty_squares(brd).include?(5)
-#     brd[5] = COMPUTER_MARKER
-#   else
-#     square = empty_squares(brd).sample
-#     brd[square] = COMPUTER_MARKER
-#   end
-# end
-
 def board_full?(brd)
   empty_squares(brd).empty?
 end
