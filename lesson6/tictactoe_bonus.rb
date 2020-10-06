@@ -132,26 +132,29 @@ def alternate_player(player)
   player == PLAYER_1 ? PLAYER_2 : PLAYER_1
 end
 
-def determine_first_player(string)
+def determine_player(str)
   player = ''
-  if string == 'choose'
+  if str == 'choose'
     loop do
       prompt "Choose first player: p/player or c/computer"
       choice = gets.chomp
-      return player << PLAYER_1 if choice.downcase.start_with?('p')
-      return player << PLAYER_2 if choice.downcase.start_with?('c')
+      return player << PLAYER_1 if choice.downcase == 'p' ||
+                                   choice.downcase == PLAYER_1.downcase
+      return player << PLAYER_2 if choice.downcase == 'c' ||
+                                   choice.downcase == PLAYER_2.downcase
       prompt "Not a valid choice."
     end
   else
-    player = string
+    player = str
   end
 end
 
 loop do
+  system 'clear'
   prompt "First to #{NUM_WINS} wins is the champion!"
   player_score = 0
   computer_score = 0
-  first_player = determine_first_player(FIRST_TURN)
+  first_player = determine_player(FIRST_TURN)
   loop do
     board = initialize_board
     current_player = first_player
@@ -169,9 +172,9 @@ loop do
     display_board(board)
 
     if someone_won?(board)
-      prompt "#{detect_winner(board)} won!"
-      player_score += 1 if detect_winner(board) == PLAYER_1
-      computer_score += 1 if detect_winner(board) == PLAYER_2
+      game_winner = detect_winner(board)
+      prompt "#{game_winner} won!"
+      game_winner == PLAYER_1 ? player_score += 1 : computer_score += 1
     else
       prompt "It's a tie!"
     end
