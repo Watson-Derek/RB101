@@ -65,7 +65,7 @@ end
 def player_places_piece!(brd)
   square = ''
   loop do
-    prompt "Choose a squre: #{joinor(empty_squares(brd))}"
+    prompt "Choose a square: #{joinor(empty_squares(brd))}"
     square = gets.chomp
     break if square == square.to_i.to_s &&
              empty_squares(brd).include?(square.to_i)
