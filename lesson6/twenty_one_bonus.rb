@@ -10,12 +10,14 @@ WINNING_SCORE = 21
 DEALER_STAND = 17
 ACE_SUBTRACT = 10
 HANDS_TO_WIN = 5
+VALID_ANSWERS = %w(y yes n no)
+VALID_YES = %w(y yes)
 
 def prompt(msg)
   puts "=> #{msg}"
 end
 
-def shuffle_deck
+def create_deck
   new_deck = []
   SUITS.each do |face|
     CARD_VALUES.each do |value|
@@ -31,7 +33,7 @@ def deal_card!(deck)
   card
 end
 
-def score(hand)
+def hand_sum(hand)
   sum = 0
 
   hand.each do |card|
@@ -44,13 +46,13 @@ def score(hand)
   end
 
   if sum > WINNING_SCORE
-    sum = aces(hand, sum)
+    sum = correct_for_aces(hand, sum)
   else
     sum
   end
 end
 
-def aces(hand, score)
+def correct_for_aces(hand, score)
   return score if score <= WINNING_SCORE
   hand.each do |card|
     break if score < WINNING_SCORE
@@ -63,6 +65,18 @@ end
 
 def busted?(hand)
   hand > WINNING_SCORE
+end
+
+def player_busted(hand, sum, hash)
+  prompt "#{PLAYER} hand: #{list_hand(hand)}"
+  puts
+  prompt "#{sum}, Busted! #{DEALER} wins!"
+  hash[:dealer] += 1
+end
+
+def dealer_busted(sum, hash)
+  prompt "#{DEALER} busted with #{sum}, #{PLAYER} wins!"
+  hash[:player] += 1
 end
 
 def join_and(array, delimiter = ', ', word = 'and')
@@ -100,6 +114,7 @@ def list_dealer_start(hand)
 end
 
 def list_hands_player_turn(player, dealer, score)
+  system 'clear'
   prompt "#{DEALER} hand: #{list_dealer_start(dealer)}"
   prompt "#{PLAYER} hand: #{list_hand(player)}"
   prompt "#{PLAYER} score is currently #{score}"
@@ -120,7 +135,13 @@ def player_decision
   end
 end
 
-def result(player, dealer)
+def dealer_draw_card(hand, deck)
+  hand << deal_card!(deck)
+  prompt "#{DEALER} drawing card"
+  sleep 1.5
+end
+
+def detect_round_winner(player, dealer)
   if player > dealer
     PLAYER
   elsif dealer > player
@@ -138,12 +159,17 @@ end
 
 def play_again?
   puts
-  prompt "Do you want to play again? (y or n)"
-  answer = gets.chomp
-  answer.downcase.start_with?('y')
+  answer = ''
+  loop do
+    prompt "Do you want to play again? (y/yes or n/no)"
+    answer = gets.chomp
+    break if VALID_ANSWERS.include?(answer.downcase)
+    prompt "Not a valid answer."
+  end
+  VALID_YES.include?(answer.downcase)
 end
 
-def hand_end(player, dealer)
+def display_running_scoore(player, dealer)
   puts
   prompt "Current score is #{PLAYER}: #{player}, #{DEALER}: #{dealer}"
   puts
@@ -151,7 +177,16 @@ def hand_end(player, dealer)
   gets
 end
 
-def grand_winner(player, dealer)
+def add_to_running_score(winner, score_hash)
+  case winner
+  when PLAYER
+    then score_hash[:player] += 1
+  when DEALER
+    then score_hash[:dealer] += 1
+  end
+end
+
+def display_grand_winner(player, dealer)
   puts
   if player == HANDS_TO_WIN
     prompt "#{PLAYER} wins! " \
@@ -162,17 +197,22 @@ def grand_winner(player, dealer)
   end
 end
 
-# Main game loop
-loop do
+def display_welcome_information
   system 'clear'
+  prompt "Welcome to the Twenty One game!"
   prompt "First to #{HANDS_TO_WIN} hands won is the winner!"
   prompt "Press enter to begin playing!"
   gets
-  player_total = 0
-  dealer_total = 0
+end
+
+# Main game loop
+loop do
+  display_welcome_information
+
+  total_scores = { player: 0, dealer: 0 }
 
   loop do
-    deck = shuffle_deck
+    deck = create_deck
 
     player_hand = []
     dealer_hand = []
@@ -182,70 +222,58 @@ loop do
       dealer_hand << deal_card!(deck)
     end
 
-    player_score = score(player_hand)
-    dealer_score = score(dealer_hand)
+    player_hand_sum = hand_sum(player_hand)
+    dealer_hand_sum = hand_sum(dealer_hand)
 
     loop do
       loop do
-        system 'clear'
-        list_hands_player_turn(player_hand, dealer_hand, player_score)
+        list_hands_player_turn(player_hand, dealer_hand, player_hand_sum)
 
         player_choice = player_decision
 
         player_hand << deal_card!(deck) if player_choice == HIT
-        player_score = score(player_hand)
-        break if player_choice == STAND || busted?(player_score)
+        player_hand_sum = hand_sum(player_hand)
+        break if player_choice == STAND || busted?(player_hand_sum)
       end
 
-      if busted?(player_score)
-        prompt "Player hand: #{list_hand(player_hand)}"
-        puts
-        prompt "#{player_score}, Busted! #{DEALER} wins!"
-        dealer_total += 1
+      if busted?(player_hand_sum)
+        player_busted(player_hand, player_hand_sum, total_scores)
         break
       else
-        prompt "You have stood with a score of #{player_score}"
+        prompt "You have stood with a score of #{player_hand_sum}"
       end
 
       loop do
         puts
-        list_hands_dealer_turn(dealer_hand, dealer_score)
-        if dealer_score >= DEALER_STAND
+        list_hands_dealer_turn(dealer_hand, dealer_hand_sum)
+        if dealer_hand_sum >= DEALER_STAND
           puts
           break
         else
-          dealer_hand << deal_card!(deck)
-          dealer_score = score(dealer_hand)
-          prompt "#{DEALER} drawing card"
-          sleep 1.5
+          dealer_draw_card(dealer_hand, deck)
+          dealer_hand_sum = hand_sum(dealer_hand)
         end
       end
 
-      if busted?(dealer_score)
-        prompt "#{DEALER} busted with #{dealer_score}, #{PLAYER} wins!"
-        player_total += 1
+      if busted?(dealer_hand_sum)
+        dealer_busted(dealer_hand_sum, total_scores)
         break
       end
 
-      winner = result(player_score, dealer_score)
+      winner = detect_round_winner(player_hand_sum, dealer_hand_sum)
       display_winner(winner)
 
-      case winner
-      when PLAYER
-        then player_total += 1
-      when DEALER
-        then dealer_total += 1
-      end
+      add_to_running_score(winner, total_scores)
 
       break
     end
 
-    break if player_total == HANDS_TO_WIN || dealer_total == HANDS_TO_WIN
+    break if total_scores.any? { |_key, value| value == 5 }
 
-    hand_end(player_total, dealer_total)
+    display_running_scoore(total_scores[:player], total_scores[:dealer])
   end
 
-  grand_winner(player_total, dealer_total)
+  display_grand_winner(total_scores[:player], total_scores[:dealer])
 
   break unless play_again?
 end
